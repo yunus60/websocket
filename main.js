@@ -29,12 +29,16 @@ wss.on("connection", function (ws, req) {
   }
 
   ws.on("message", (data) => {
-    let stringifiedData = data.toString();
-    if (stringifiedData === 'pong') {
+    let sData = JSON.parse(data);
+    if (sData === 'pong') {
       console.log('keepAlive');
       return;
     }
-    broadcast(ws, stringifiedData, false);
+    if (sData["type"] == "player-pause"){
+      console.log(sData["type"]);
+      broadcast(ws, sData["type"], false);
+    }
+    
   });
 
   ws.on("close", (data) => {
