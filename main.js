@@ -29,12 +29,11 @@ wss.on("connection", function (ws, req) {
   }
 
   ws.on("message", (data) => {
+    
     let sData = JSON.parse(data);
-    if (sData["type"] == "player-pause"){
-      console.log(sData["type"]);
-      
-    }
-    broadcast(ws, sData["type"], false);
+    
+    ws.send(JSON.stringify(sData));
+    //broadcast(ws, sData["type"], false);
   });
 
   ws.on("close", (data) => {
