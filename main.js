@@ -32,8 +32,8 @@ wss.on("connection", function (ws, req) {
     
     let sData = JSON.parse(data);
     
-    ws.send(JSON.stringify(sData));
-    //broadcast(ws, sData["type"], false);
+    //ws.send(JSON.stringify(sData));
+    broadcast(ws, JSON.stringify(sData), false);
   });
 
   ws.on("close", (data) => {
