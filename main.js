@@ -30,15 +30,11 @@ wss.on("connection", function (ws, req) {
 
   ws.on("message", (data) => {
     let sData = JSON.parse(data);
-    if (sData === 'pong') {
-      console.log('keepAlive');
-      return;
-    }
     if (sData["type"] == "player-pause"){
       console.log(sData["type"]);
-      broadcast(ws, sData["type"], false);
+      
     }
-    
+    broadcast(ws, sData["type"], false);
   });
 
   ws.on("close", (data) => {
