@@ -1,82 +1,47 @@
-const http = require("http");
-const express = require("express");
+const express = require('express');
 const app = express();
-
-app.use(express.static("public"));
-// require("dotenv").config();
-
-const serverPort = process.env.PORT || 3000;
+const http = require('http');
 const server = http.createServer(app);
-const WebSocket = require("ws");
-
-let keepAliveId;
-
-const wss =
-  process.env.NODE_ENV === "production"
-    ? new WebSocket.Server({ server })
-    : new WebSocket.Server({ port: 5001 });
-
-server.listen(serverPort);
-console.log(`Server started on port ${serverPort} in stage ${process.env.NODE_ENV}`);
-
-wss.on("connection", function (ws, req) {
-  console.log("Connection Opened");
-  console.log("Client size: ", wss.clients.size);
-
-  if (wss.clients.size === 1) {
-    console.log("first connection. starting keepalive");
-    keepServerAlive();
-  }
-
-  ws.on("message", (data) => {
-    
-    let sData = JSON.parse(data);
-    
-    //ws.send(JSON.stringify(sData));
-    broadcast(ws, JSON.stringify(sData), false);
-  });
-
-  ws.on("close", (data) => {
-    console.log("closing connection");
-
-    if (wss.clients.size === 0) {
-      console.log("last client disconnected, stopping keepAlive interval");
-      clearInterval(keepAliveId);
-    }
-  });
-});
-
-// Implement broadcast function because of ws doesn't have it
-const broadcast = (ws, message, includeSelf) => {
-  if (includeSelf) {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  } else {
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  }
-};
-
-/**
- * Sends a ping message to all connected clients every 50 seconds
- */
- const keepServerAlive = () => {
-  keepAliveId = setInterval(() => {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send('ping');
-      }
-    });
-  }, 50000);
-};
-
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 app.get('/', (req, res) => {
-    res.send('Hello World!');
+  res.sendFile(__dirname + '/test.html');
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected', socket.id);
+
+  socket.on('play', () => {
+    
+    console.log('play');
+    socket.broadcast.emit("play");
+  });
+
+  socket.on('pause', () => {
+    console.log('pause');
+    socket.broadcast.emit("pause");
+  });
+
+  socket.on('seeked', (seek) => {
+    
+    console.log('seeked', seek);
+    socket.broadcast.emit("seeked", seek);
+    
+    
+  });
+
+  socket.on('videoEvent', (event, currentTime) => {
+    // log('Got video event:', room, event, 'from: ', socket.id, volume, currentTime);
+    socket.broadcast.emit('videoEvent', event, currentTime);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+
+});
+
+server.listen(3000, () => {
+  console.log('listening on *:3000');
 });
